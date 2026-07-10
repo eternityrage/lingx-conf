@@ -100,15 +100,44 @@ def upload_to_all_platforms(video_path, caption, word, reel_data=None):
     print(f"\nSuccessful: {len(results['platforms_successful'])}, Failed: {len(results['platforms_failed'])}, Skipped: {len(results['platforms_skipped'])}")
     return results
 
+PUBLISHED_LOG = "published_videos.json"
+
+def get_published():
+    if os.path.exists(PUBLISHED_LOG):
+        with open(PUBLISHED_LOG, "r", encoding="utf-8") as f:
+            try:
+                return json.load(f)
+            except:
+                return []
+    return []
+
+def save_published(word, video_name):
+    published = get_published()
+    published.append({"word": word, "video": video_name, "time": datetime.now().isoformat()})
+    with open(PUBLISHED_LOG, "w", encoding="utf-8") as f:
+        json.dump(published, f, indent=2)
+
 def main():
     reel = get_latest_reel()
     if not reel:
-        print("No reel found! Run lingexa_confused_bot.py first.")
+        print("No reel found! Run bot first.")
         sys.exit(1)
+
+    word = reel['word']
+    published = get_published()
+    published_words = [p.get("word", "") for p in published]
+
+    if word in published_words:
+        print(f"Word '{word}' already published! Skipping upload.")
+        return
+
     caption = generate_caption(reel, platform="facebook")
     print(f"Caption ({len(caption)} chars)")
     print(caption[:500])
-    upload_to_all_platforms(reel['video_path'], caption, reel['word'], reel)
+    result = upload_to_all_platforms(reel['video_path'], caption, word, reel)
+    if result.get("platforms_successful"):
+        save_published(word, reel['video_path'])
+        print(f"Published word: {word}")
 
 if __name__ == "__main__":
     main()
