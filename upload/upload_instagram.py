@@ -133,9 +133,18 @@ def upload_to_instagram(video_path, caption, is_story=False):
         print(f"[instagram] Container ID: {container_id}")
 
         # Step 3: Wait for processing (up to 180s, then force publish)
-        # Step 3: Wait for processing (fixed 30s, no polling)
-        print("[instagram] Step 3: Waiting 30 seconds for processing...")
-        time.sleep(30)
+        # Step 3: Check container status before publishing
+        print("[instagram] Step 3: Checking container status...")
+        status_url = f"https://graph.facebook.com/v21.0/{container_id}"
+        status_params = {"fields": "status_code", "access_token": access_token}
+        for _ in range(6):
+            time.sleep(20)
+            sr = requests.get(status_url, params=status_params, timeout=30)
+            sc = sr.json().get("status_code", "UNKNOWN")
+            print(f"[instagram] Status: {sc}")
+            if sc == "FINISHED":
+                print("[instagram] Video processing complete!")
+                break
 
         # Step 4: Publish
         print("[instagram] Step 4: Publishing...")
@@ -147,8 +156,8 @@ def upload_to_instagram(video_path, caption, is_story=False):
         publish_response = requests.post(publish_url, params=publish_params, timeout=60)
 
         if publish_response.status_code != 200:
-            print("[instagram] First publish failed, retrying after 20s...")
-            time.sleep(20)
+            print("[instagram] First publish failed, retrying after 30s...")
+            time.sleep(30)
             publish_response = requests.post(publish_url, params=publish_params, timeout=60)
 
         if publish_response.status_code != 200:
