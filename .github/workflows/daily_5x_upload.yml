@@ -73,5 +73,6 @@ jobs:
           git add -f output/history/all_pairs.json
           if ! git diff --staged --quiet; then
             git commit -m "Update history - Run #${{ github.run_number }}"
+            git pull --rebase
             git push
           fi
