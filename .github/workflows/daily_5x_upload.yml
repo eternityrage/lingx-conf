@@ -1,81 +1,82 @@
-name: Lingexa Confused - Daily 5x Upload
-
-on:
-  schedule:
-    - cron: '0 2 * * *'
-    - cron: '0 6 * * *'
-    - cron: '0 10 * * *'
-    - cron: '0 14 * * *'
-    - cron: '0 18 * * *'
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-
-jobs:
-  generate-and-upload:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
-      - name: Download history
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: confused-word-history
-          path: output/history/
-      - name: Init history
-        run: |
-          mkdir -p output/history
-          if [ ! -f "output/history/all_pairs.json" ]; then
-            echo '{"pairs":[],"last_updated":null}' > output/history/all_pairs.json
-          fi
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
-      - name: Install deps
-        run: |
-          sudo apt-get update && sudo apt-get install -y ffmpeg fonts-noto fonts-noto-core fonts-liberation
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          if [ -f "upload/requirements.txt" ]; then pip install -r upload/requirements.txt; fi
-      - name: Create .env
-        run: |
-          echo "POLLINATIONS_API_KEY=${{ secrets.POLLINATIONS_API_KEY }}" >> .env
-          echo "AI_MODEL=gemini-fast" >> .env
-          echo "YT_CLIENT_ID=${{ secrets.YT_CLIENT_ID }}" >> .env
-          echo "YT_CLIENT_SECRET=${{ secrets.YT_CLIENT_SECRET }}" >> .env
-          echo "YT_REFRESH_TOKEN=${{ secrets.YT_REFRESH_TOKEN }}" >> .env
-          echo "INSTAGRAM_ACCESS_TOKEN=${{ secrets.INSTAGRAM_ACCESS_TOKEN }}" >> .env
-          echo "INSTAGRAM_ACCOUNT_ID=${{ secrets.INSTAGRAM_ACCOUNT_ID }}" >> .env
-          echo "FACEBOOK_ACCESS_TOKEN=${{ secrets.FACEBOOK_ACCESS_TOKEN }}" >> .env
-          echo "FACEBOOK_PAGE_ID=${{ secrets.FACEBOOK_PAGE_ID }}" >> .env
-      - name: Generate
-        run: python lingexa_confused_bot.py
-      - name: Upload
-        run: |
-          export PYTHONPATH="${{ github.workspace }}:${{ github.workspace }}/upload:$PYTHONPATH"
-          python upload_all_platforms.py
-      - name: Save history
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: confused-word-history
-          path: output/history/all_pairs.json
-          retention-days: 90
-          overwrite: true
-      - name: Commit history
-        if: success()
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add -f output/history/all_pairs.json
-          if ! git diff --staged --quiet; then
-            git commit -m "Update history - Run #${{ github.run_number }}"
-            git pull --rebase
-            git push
-          fi
+name: Lingexa Confused - Daily 5x Upload
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+    - cron: '0 6 * * *'
+    - cron: '0 10 * * *'
+    - cron: '0 14 * * *'
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
+jobs:
+  generate-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Download history
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: confused-word-history
+          path: output/history/
+      - name: Init history
+        run: |
+          mkdir -p output/history
+          if [ ! -f "output/history/all_pairs.json" ]; then
+            echo '{"pairs":[],"last_updated":null}' > output/history/all_pairs.json
+          fi
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: Install deps
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg fonts-noto fonts-noto-core fonts-liberation
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          if [ -f "upload/requirements.txt" ]; then pip install -r upload/requirements.txt; fi
+      - name: Create .env
+        run: |
+          echo "POLLINATIONS_API_KEY=${{ secrets.POLLINATIONS_API_KEY }}" >> .env
+          echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> .env
+          echo "AI_MODEL=gemini-fast" >> .env
+          echo "YT_CLIENT_ID=${{ secrets.YT_CLIENT_ID }}" >> .env
+          echo "YT_CLIENT_SECRET=${{ secrets.YT_CLIENT_SECRET }}" >> .env
+          echo "YT_REFRESH_TOKEN=${{ secrets.YT_REFRESH_TOKEN }}" >> .env
+          echo "INSTAGRAM_ACCESS_TOKEN=${{ secrets.INSTAGRAM_ACCESS_TOKEN }}" >> .env
+          echo "INSTAGRAM_ACCOUNT_ID=${{ secrets.INSTAGRAM_ACCOUNT_ID }}" >> .env
+          echo "FACEBOOK_ACCESS_TOKEN=${{ secrets.FACEBOOK_ACCESS_TOKEN }}" >> .env
+          echo "FACEBOOK_PAGE_ID=${{ secrets.FACEBOOK_PAGE_ID }}" >> .env
+      - name: Generate
+        run: python lingexa_confused_bot.py
+      - name: Upload
+        run: |
+          export PYTHONPATH="${{ github.workspace }}:${{ github.workspace }}/upload:$PYTHONPATH"
+          python upload_all_platforms.py
+      - name: Save history
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: confused-word-history
+          path: output/history/all_pairs.json
+          retention-days: 90
+          overwrite: true
+      - name: Commit history
+        if: success()
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -f output/history/all_pairs.json
+          if ! git diff --staged --quiet; then
+            git commit -m "Update history - Run #${{ github.run_number }}"
+            git pull --rebase
+            git push
+          fi
