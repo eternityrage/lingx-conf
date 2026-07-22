@@ -169,8 +169,14 @@ def generate_data(num=WORDS_PER_VIDEO):
             remaining = num - len(collected)
             print(f"[api] Attempt {attempt + 1}: {cat} (need {remaining} more)")
             h = load_history()
-            used_set = set(h.get("pairs", [])[-50:])
-            used_str = ", ".join(used_set) if used_set else "(none)"
+            # Build used set from recent history (as core tuples for semantic dedup)
+            recent_pairs = h.get("pairs", [])[-50:]
+            used_set = set()
+            for hp in recent_pairs:
+                c = extract_core_pair(hp)
+                if c:
+                    used_set.add(c)
+            used_str = ", ".join([p for p in recent_pairs]) if recent_pairs else "(none)"
             prompt = f"""Generate 15 commonly confused word pairs about: {cat}
 
 NEVER repeat: {used_str}
@@ -179,12 +185,13 @@ Return ONLY JSON array.
 Each item has a confused pair with wrong/right usage. Make these pairs that even native speakers mix up.
 
 Format:
-[{{"pair":"AFFECT vs EFFECT","wrong":"The weather will effect our plans.","right":"The weather will affect our plans.","meaning":"Affect is a verb meaning to influence. Effect is usually a noun meaning result.","example_wrong":"The new law will effect change.","example_right":"The new law will effect change. (Here effect IS correct as a verb)","tip":"Affect = Action (both start with A). Effect = End result (both start with E)."}}]
+[{{"pair":"AFFECT vs EFFECT","wrong":"The weather will effect our plans.","right":"The weather will affect our plans.","meaning":"Affect is a verb meaning to influence. Effect is usually a noun meaning result.","tip":"Affect = Action (both start with A). Effect = End result (both start with E)."}}]
 
 REQUIREMENTS:
 - 'meaning' field: ONE clear sentence explaining the difference
 - 'tip' field: ONE unforgettable memory trick
 - Wrong/right examples should be REALISTIC sentences people actually write
+- Pairs must be related to the topic {cat}
 Return ONLY the JSON array.""" 
             payload = {"model": AI_MODEL, "messages": [{"role": "system", "content": "Return ONLY valid JSON arrays."}, {"role": "user", "content": prompt}], "temperature": 1.6}
             resp = requests.post(url, headers=headers, json=payload, timeout=60)
@@ -208,7 +215,6 @@ Return ONLY the JSON array."""
                     continue
                 if core and core in used_set:
                     continue
-                # Also check full history via semantic comparison
                 h = load_history()
                 if is_semantically_used(pair, h.get("pairs", [])):
                     continue
