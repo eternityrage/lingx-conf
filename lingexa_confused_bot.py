@@ -7,6 +7,8 @@ import os, sys, json, random, asyncio, subprocess
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
+import random
+import re
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
@@ -45,31 +47,98 @@ def save_history(data):
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-def is_used(pid):
-    h = load_history()
-    return pid.lower().strip() in [x.lower().strip() for x in h.get("pairs", [])]
+def extract_core_pair(pair_str):
+    """Extract the core (left_word, right_word) tuple for semantic dedup.
+    Handles various formats like 'affect vs effect', 'affect vs. effect (as verb/noun)'
+    """
+    parts = re.split(r'\s+vs\.?\s+', pair_str.lower().strip(), maxsplit=1)
+    if len(parts) < 2:
+        return None
+    left = parts[0].strip()
+    right = parts[1].strip()
+    left = re.sub(r'\(.*?\)', '', left).strip().rstrip('.,;:!?')
+    right = re.sub(r'\(.*?\)', '', right).strip().rstrip('.,;:!?')
+    left = re.split(r'\s+as\s+', left)[0].strip()
+    right = re.split(r'\s+as\s+', right)[0].strip()
+    lw = left.split()[0].strip('.,;:!?()[]{}')
+    rw = right.split()[0].strip('.,;:!?()[]{}')
+    if not lw or not rw:
+        return None
+    return (lw, rw)
+
 
 def add_to_history(ids):
     h = load_history()
-    for pid in ids:
-        if pid.lower().strip() not in [x.lower().strip() for x in h.get("pairs", [])]:
-            h["pairs"].append(pid.lower().strip())
+    existing_cores = set()
+    for existing in h.get("pairs", []):
+        c = extract_core_pair(existing)
+        if c:
+            existing_cores.add(c)
+    for pid_str in ids:
+        core = extract_core_pair(pid_str)
+        if core and core not in existing_cores:
+            h["pairs"].append(pid_str.strip().lower())
+            existing_cores.add(core)
+        elif not core:
+            if pid_str.strip().lower() not in [x.lower().strip() for x in h.get("pairs", [])]:
+                h["pairs"].append(pid_str.strip().lower())
     save_history(h)
 
 def generate_data(num=WORDS_PER_VIDEO):
-    max_attempts = 20
+    max_attempts = 60
     cats = [
-        "affect vs effect", "imply vs infer", "comprise vs compose",
-        "further vs farther", "fewer vs less", "that vs which",
-        "who vs whom", "between vs among", "bring vs take",
-        "lie vs lay", "rise vs raise", "sit vs set",
-        "ensure vs insure", "continual vs continuous", "economic vs economical",
-        "historic vs historical", "classic vs classical", "sensual vs sensuous",
-        "credible vs credulous", "definite vs definitive", "official vs officious",
-        "masterful vs masterly", "childlike vs childish", "forego vs forgo",
-        "flaunt vs flout", "compliment vs complement", "discreet vs discrete",
-        "principal vs principle", "stationary vs stationery", "capital vs capitol",
+        "homophones that sound identical but have different spellings and meanings",
+        "verb tense confusions: present perfect vs past simple vs past continuous",
+        "preposition mistakes that completely change meaning",
+        "false friends between English and French/Spanish/Italian",
+        "formal vs informal register in professional emails",
+        "academic vocabulary that undergraduates commonly misuse",
+        "business English words that professionals confuse in meetings",
+        "regional differences between US, UK, Australian, and Indian English",
+        "singular vs plural agreement errors with collective nouns",
+        "adjective vs adverb positions and their effect on meaning",
+        "countable vs uncountable noun confusions with quantifiers",
+        "commonly misused idioms and their correct forms",
+        "phrasal verb meanings that non-native speakers mix up",
+        "silent-letter words that trick even native spellers",
+        "word order errors in English questions and negations",
+        "comparative and superlative form mistakes with irregular adjectives",
+        "active vs passive voice misuse in scientific and technical writing",
+        "modal verb shades of meaning: can/may, must/have to, shall/will, should/ought",
+        "conditional sentence type confusions (zero, first, second, third)",
+        "contractions vs full forms across formal and casual writing",
+        "Latin and Greek pluralization rules that people get wrong",
+        "technical jargon confusions across different academic disciplines",
+        "near-synonyms with different emotional connotations",
+        "words that look similar but have opposite or unrelated meanings",
+        "double negative constructions in different English dialects",
+        "reflexive and reciprocal pronoun errors",
+        "relative clause punctuation: restrictive vs non-restrictive (that vs which)",
+        "subjunctive mood usage in formal vs everyday English",
+        "collocation errors: words that don't naturally go together",
+        "slang vs standard English in workplace communication",
+        "archaic vs modern word choices in contemporary writing",
+        "borrowed foreign words with unexpected English pronunciation",
+        "compound word hyphenation rules and common mistakes",
+        "cliche confusions: commonly misquoted sayings and proverbs",
+        "prefix and suffix errors that change word meaning entirely",
+        "false singulars and false plurals in English",
+        "gender-neutral language confusions in modern usage",
+        "time and sequence adverb placement errors",
+        "correlative conjunction pairings (either/or, neither/nor, not only/but also)",
+        "article usage: zero article vs definite vs indefinite with abstract nouns",
+        "linking verb vs action verb confusions (feel good vs feel well)",
+        "gradable vs non-gradable adjective intensifier mistakes",
+        "infinitive vs gerund after certain verbs (stop to do vs stop doing)",
+        "direct vs indirect speech tense shift errors",
+        "emigrate vs immigrate vs migrate: movement prepositions",
+        "principal vs principle and other sound-alike legal terms",
+        "every day vs everyday and other compound adjective confusions",
+        "who vs whom in formal vs casual contexts",
+        "bring vs take vs fetch: direction of motion verbs",
+        "economic vs economical and other -ic/-ical adjective pairs",
     ]
+    random.shuffle(cats)
     collected = []
     for attempt in range(max_attempts):
         try:
@@ -97,7 +166,7 @@ REQUIREMENTS:
 - 'tip' field: ONE unforgettable memory trick
 - Wrong/right examples should be REALISTIC sentences people actually write
 Return ONLY the JSON array.""" 
-            payload = {"model": AI_MODEL, "messages": [{"role": "system", "content": "Return ONLY valid JSON arrays."}, {"role": "user", "content": prompt}], "temperature": 1.3}
+            payload = {"model": AI_MODEL, "messages": [{"role": "system", "content": "Return ONLY valid JSON arrays."}, {"role": "user", "content": prompt}], "temperature": 1.6}
             resp = requests.post(url, headers=headers, json=payload, timeout=60)
             resp.raise_for_status()
             content = resp.json()["choices"][0]["message"]["content"].strip()
@@ -109,14 +178,24 @@ Return ONLY the JSON array."""
             if not isinstance(items, list):
                 raise ValueError("Not a list")
             fresh = []
+            seen_this_run = set()
             for item in items:
                 pair = item.get("pair", "").strip()
                 if not pair:
                     continue
-                if pair.lower() in used_set:
+                core = extract_core_pair(pair)
+                if core and core in seen_this_run:
                     continue
+                if core and core in used_set:
+                    continue
+                # Also check full history via semantic comparison
+                h = load_history()
+                if is_semantically_used(pair, h.get("pairs", [])):
+                    continue
+                if core:
+                    seen_this_run.add(core)
+                    used_set.add(core)
                 fresh.append(item)
-                used_set.add(pair.lower())
                 if len(collected) + len(fresh) >= num:
                     break
             collected.extend(fresh)
