@@ -67,6 +67,26 @@ def extract_core_pair(pair_str):
     return (lw, rw)
 
 
+def is_semantically_used(pair_str, history_pairs):
+    """Check if a word pair is semantically already in history.
+    Compares core left/right words rather than exact strings.
+    """
+    core = extract_core_pair(pair_str)
+    if not core:
+        return False
+    lw, rw = core
+    for h_pair in history_pairs:
+        h_core = extract_core_pair(h_pair)
+        if not h_core:
+            continue
+        hl, hr = h_core
+        if lw == hl and rw == hr:
+            return True
+        if lw == hr and rw == hl:
+            return True
+    return False
+
+
 def add_to_history(ids):
     h = load_history()
     existing_cores = set()
