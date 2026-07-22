@@ -133,7 +133,7 @@ def generate_data(num=WORDS_PER_VIDEO):
         "words that look similar but have opposite or unrelated meanings",
         "double negative constructions in different English dialects",
         "reflexive and reciprocal pronoun errors",
-        "relative clause punctuation: restrictive vs non-restrictive (that vs which)",
+        "relative clause punctuation: restrictive vs non-restrictive",
         "subjunctive mood usage in formal vs everyday English",
         "collocation errors: words that don't naturally go together",
         "slang vs standard English in workplace communication",
@@ -152,10 +152,10 @@ def generate_data(num=WORDS_PER_VIDEO):
         "infinitive vs gerund after certain verbs (stop to do vs stop doing)",
         "direct vs indirect speech tense shift errors",
         "emigrate vs immigrate vs migrate: movement prepositions",
-        "principal vs principle and other sound-alike legal terms",
+        "sound-alike legal and administrative term confusions",
         "every day vs everyday and other compound adjective confusions",
-        "who vs whom in formal vs casual contexts",
-        "bring vs take vs fetch: direction of motion verbs",
+        "subject vs object pronoun choices in formal vs casual contexts",
+        "direction of motion verb confusions (movement toward vs away)",
         "economic vs economical and other -ic/-ical adjective pairs",
     ]
     random.shuffle(cats)
