@@ -211,9 +211,9 @@ Return ONLY the JSON array."""
                 if not pair:
                     continue
                 core = extract_core_pair(pair)
-                if core and core in seen_this_run:
+                if core and (core in seen_this_run or (core[1], core[0]) in seen_this_run):
                     continue
-                if core and core in used_set:
+                if core and (core in used_set or (core[1], core[0]) in used_set):
                     continue
                 h = load_history()
                 if is_semantically_used(pair, h.get("pairs", [])):
