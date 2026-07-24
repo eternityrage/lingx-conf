@@ -88,6 +88,40 @@ def upload_to_all_platforms(video_path, caption, word, reel_data=None):
         else: status = "-"
         print(f"{pname}: {status}")
     print("=" * 60)
+    
+    # === UPLOAD STATUS REPORT ===
+    print("\n" + "=" * 60)
+    print("UPLOAD STATUS REPORT")
+    print("=" * 60)
+    # Collect Instagram result
+    ig_result = results.get("uploads", {}).get("instagram", {})
+    fb_result = results.get("uploads", {}).get("facebook", {})
+    yt_result = results.get("uploads", {}).get("youtube", {})
+    
+    if ig_result:
+        if ig_result.get("status") == "success":
+            print(f"INSTAGRAM: SUCCESS | Media ID: {ig_result.get('id', 'N/A')}")
+        else:
+            print(f"INSTAGRAM: FAILED | {ig_result.get('error', 'unknown')}")
+    else:
+        ig_failed = "instagram" in [p.lower() for p in results.get("platforms_failed", [])]
+        ig_skipped = "instagram" in [p.lower() for p in results.get("platforms_skipped", [])]
+        print(f"INSTAGRAM: {'FAILED' if ig_failed else ('SKIPPED' if ig_skipped else '-')}")
+    
+    if fb_result:
+        if fb_result.get("status") == "success":
+            print(f"FACEBOOK: SUCCESS | Video ID: {fb_result.get('id', 'N/A')}")
+        else:
+            print(f"FACEBOOK: FAILED | {fb_result.get('error', 'unknown')}")
+    else:
+        fb_failed = "facebook" in [p.lower() for p in results.get("platforms_failed", [])]
+        fb_skipped = "facebook" in [p.lower() for p in results.get("platforms_skipped", [])]
+        print(f"FACEBOOK: {'FAILED' if fb_failed else ('SKIPPED' if fb_skipped else '-')}")
+    
+    if yt_result:
+        print(f"YOUTUBE: {'SUCCESS' if yt_result.get('status')=='success' else 'FAILED'} | ID: {yt_result.get('id', 'N/A')}")
+    print("=" * 60)
+
     return results
     platforms = [("facebook", upload_to_facebook, "Facebook"), ("instagram", upload_to_instagram, "Instagram"), ("youtube", upload_to_youtube, "YouTube")]
     for platform_name, upload_func, display_name in platforms:
@@ -130,6 +164,40 @@ def upload_to_all_platforms(video_path, caption, word, reel_data=None):
         else: status = "-"
         print(f"{pname}: {status}")
     print("=" * 60)
+    
+    # === UPLOAD STATUS REPORT ===
+    print("\n" + "=" * 60)
+    print("UPLOAD STATUS REPORT")
+    print("=" * 60)
+    # Collect Instagram result
+    ig_result = results.get("uploads", {}).get("instagram", {})
+    fb_result = results.get("uploads", {}).get("facebook", {})
+    yt_result = results.get("uploads", {}).get("youtube", {})
+    
+    if ig_result:
+        if ig_result.get("status") == "success":
+            print(f"INSTAGRAM: SUCCESS | Media ID: {ig_result.get('id', 'N/A')}")
+        else:
+            print(f"INSTAGRAM: FAILED | {ig_result.get('error', 'unknown')}")
+    else:
+        ig_failed = "instagram" in [p.lower() for p in results.get("platforms_failed", [])]
+        ig_skipped = "instagram" in [p.lower() for p in results.get("platforms_skipped", [])]
+        print(f"INSTAGRAM: {'FAILED' if ig_failed else ('SKIPPED' if ig_skipped else '-')}")
+    
+    if fb_result:
+        if fb_result.get("status") == "success":
+            print(f"FACEBOOK: SUCCESS | Video ID: {fb_result.get('id', 'N/A')}")
+        else:
+            print(f"FACEBOOK: FAILED | {fb_result.get('error', 'unknown')}")
+    else:
+        fb_failed = "facebook" in [p.lower() for p in results.get("platforms_failed", [])]
+        fb_skipped = "facebook" in [p.lower() for p in results.get("platforms_skipped", [])]
+        print(f"FACEBOOK: {'FAILED' if fb_failed else ('SKIPPED' if fb_skipped else '-')}")
+    
+    if yt_result:
+        print(f"YOUTUBE: {'SUCCESS' if yt_result.get('status')=='success' else 'FAILED'} | ID: {yt_result.get('id', 'N/A')}")
+    print("=" * 60)
+
     return results
 
 PUBLISHED_LOG = "published_videos.json"
