@@ -72,77 +72,9 @@ def upload_to_all_platforms(video_path, caption, word, reel_data=None):
     results = {"timestamp": datetime.now().isoformat(), "word": word, "video": video_path, "uploads": {}, "platforms_attempted": [], "platforms_successful": [], "platforms_skipped": [], "platforms_failed": []}
     print(f"\n{'='*80}\n{CHANNEL_NAME.upper()} - MULTI-PLATFORM UPLOAD\n{'='*80}")
     if not Path(video_path).exists():
-        
-    # === STANDARDIZED STATUS REPORT ===
-    print("\n" + "=" * 60)
-    print("UPLOAD STATUS REPORT")
-    print("=" * 60)
-    success_list = [p.lower() for p in results.get("platforms_successful", [])]
-    failed_list = [p.lower() for p in results.get("platforms_failed", [])]
-    skipped_list = [p.lower() for p in results.get("platforms_skipped", [])]
-    for pname in ["INSTAGRAM", "FACEBOOK", "YOUTUBE", "THREADS", "TIKTOK"]:
-        pl = pname.lower()
-        if pl in success_list: status = "SUCCESS"
-        elif pl in failed_list: status = "FAILED"
-        elif pl in skipped_list: status = "SKIPPED"
-        else: status = "-"
-        print(f"{pname}: {status}")
-    print("=" * 60)
-    
-            # ====== UPLOAD STATUS REPORT ======
-    print("\n" + "=" * 60)
-    print("UPLOAD STATUS REPORT")
-    print("=" * 60)
-    uploads = results.get("uploads", {})
-    success_count = 0
-    fail_count = 0
-    skip_count = 0
-    for pname, pkey in [("INSTAGRAM", "instagram"), ("FACEBOOK", "facebook"), ("YOUTUBE", "youtube"),
-                          ("THREADS", "threads"), ("TIKTOK", "tiktok"), ("TWITTER", "twitter"),
-                          ("VK", "vk"), ("TELEGRAM", "telegram")]:
-        pinfo = uploads.get(pkey, {})
-        if pinfo and pinfo.get("status") == "success":
-            pid = pinfo.get("id", "N/A")
-            print(f"  {pname}: SUCCESS (ID: {pid})")
-            success_count += 1
-        elif pinfo and pinfo.get("status") == "skipped":
-            reason = pinfo.get("reason", "unknown")
-            print(f"  {pname}: SKIPPED - {reason}")
-            skip_count += 1
-        elif pinfo:
-            err = str(pinfo.get("error", pinfo.get("reason", "unknown")))[:100]
-            print(f"  {pname}: FAILED - {err}")
-            fail_count += 1
-        else:
-            pl = pkey.lower()
-            failed = pl in [p.lower() for p in results.get("platforms_failed", [])]
-            skipped = pl in [p.lower() for p in results.get("platforms_skipped", [])]
-            if failed: print(f"  {pname}: FAILED"); fail_count += 1
-            elif skipped: print(f"  {pname}: SKIPPED"); skip_count += 1
-            else: print(f"  {pname}: -")
-    print("=" * 60)
-    print(f"  Results: {success_count} success, {fail_count} failed, {skip_count} skipped")
-    print("=" * 60)
+        print(f"[ERROR] Video file not found: {video_path}")
+        return results
 
-    uploads = results.get("uploads", {})
-    for pname, pkey in [("INSTAGRAM", "instagram"), ("FACEBOOK", "facebook"), ("YOUTUBE", "youtube"),
-                          ("THREADS", "threads"), ("TIKTOK", "tiktok"), ("TWITTER", "twitter"),
-                          ("VK", "vk"), ("TELEGRAM", "telegram")]:
-        pinfo = uploads.get(pkey, {})
-        if pinfo and pinfo.get("status") == "success":
-            pid = pinfo.get("id", "N/A")
-            print(f"{pname}: SUCCESS (ID: {pid})")
-        elif pinfo:
-            err = str(pinfo.get("error", pinfo.get("reason", "unknown")))[:80]
-            print(f"{pname}: FAILED - {err}")
-        else:
-            pl = pkey.lower()
-            failed = pl in [p.lower() for p in results.get("platforms_failed", [])]
-            skipped = pl in [p.lower() for p in results.get("platforms_skipped", [])]
-            print(f"{pname}: {'FAILED' if failed else ('SKIPPED' if skipped else '-')}")
-    print("=" * 60)
-
-    return results
     platforms = [("facebook", upload_to_facebook, "Facebook"), ("instagram", upload_to_instagram, "Instagram"), ("youtube", upload_to_youtube, "YouTube")]
     for platform_name, upload_func, display_name in platforms:
         print(f"\n{display_name} UPLOAD...")
@@ -168,52 +100,35 @@ def upload_to_all_platforms(video_path, caption, word, reel_data=None):
         else:
             results["platforms_skipped"].append(platform_name)
     print(f"\nSuccessful: {len(results['platforms_successful'])}, Failed: {len(results['platforms_failed'])}, Skipped: {len(results['platforms_skipped'])}")
-    
-    # === STANDARDIZED STATUS REPORT ===
-    print("\n" + "=" * 60)
-    print("UPLOAD STATUS REPORT")
-    print("=" * 60)
-    success_list = [p.lower() for p in results.get("platforms_successful", [])]
-    failed_list = [p.lower() for p in results.get("platforms_failed", [])]
-    skipped_list = [p.lower() for p in results.get("platforms_skipped", [])]
-    for pname in ["INSTAGRAM", "FACEBOOK", "YOUTUBE", "THREADS", "TIKTOK"]:
-        pl = pname.lower()
-        if pl in success_list: status = "SUCCESS"
-        elif pl in failed_list: status = "FAILED"
-        elif pl in skipped_list: status = "SKIPPED"
-        else: status = "-"
-        print(f"{pname}: {status}")
-    print("=" * 60)
-    
+
     # === UPLOAD STATUS REPORT ===
     print("\n" + "=" * 60)
     print("UPLOAD STATUS REPORT")
     print("=" * 60)
-    # Collect Instagram result
     ig_result = results.get("uploads", {}).get("instagram", {})
     fb_result = results.get("uploads", {}).get("facebook", {})
     yt_result = results.get("uploads", {}).get("youtube", {})
-    
+
     if ig_result:
         if ig_result.get("status") == "success":
-            print(f"INSTAGRAM: SUCCESS | Media ID: {ig_result.get('id', 'N/A')}")
+            print(f"INSTAGRAM: SUCCESS (ID: {ig_result.get('id', 'N/A')})")
         else:
             print(f"INSTAGRAM: FAILED | {ig_result.get('error', 'unknown')}")
     else:
         ig_failed = "instagram" in [p.lower() for p in results.get("platforms_failed", [])]
         ig_skipped = "instagram" in [p.lower() for p in results.get("platforms_skipped", [])]
         print(f"INSTAGRAM: {'FAILED' if ig_failed else ('SKIPPED' if ig_skipped else '-')}")
-    
+
     if fb_result:
         if fb_result.get("status") == "success":
-            print(f"FACEBOOK: SUCCESS | Video ID: {fb_result.get('id', 'N/A')}")
+            print(f"FACEBOOK: SUCCESS (ID: {fb_result.get('id', 'N/A')})")
         else:
             print(f"FACEBOOK: FAILED | {fb_result.get('error', 'unknown')}")
     else:
         fb_failed = "facebook" in [p.lower() for p in results.get("platforms_failed", [])]
         fb_skipped = "facebook" in [p.lower() for p in results.get("platforms_skipped", [])]
         print(f"FACEBOOK: {'FAILED' if fb_failed else ('SKIPPED' if fb_skipped else '-')}")
-    
+
     if yt_result:
         print(f"YOUTUBE: {'SUCCESS' if yt_result.get('status')=='success' else 'FAILED'} | ID: {yt_result.get('id', 'N/A')}")
     print("=" * 60)
