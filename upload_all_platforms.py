@@ -72,7 +72,23 @@ def upload_to_all_platforms(video_path, caption, word, reel_data=None):
     results = {"timestamp": datetime.now().isoformat(), "word": word, "video": video_path, "uploads": {}, "platforms_attempted": [], "platforms_successful": [], "platforms_skipped": [], "platforms_failed": []}
     print(f"\n{'='*80}\n{CHANNEL_NAME.upper()} - MULTI-PLATFORM UPLOAD\n{'='*80}")
     if not Path(video_path).exists():
-        return results
+        
+    # === STANDARDIZED STATUS REPORT ===
+    print("\n" + "=" * 60)
+    print("UPLOAD STATUS REPORT")
+    print("=" * 60)
+    success_list = [p.lower() for p in results.get("platforms_successful", [])]
+    failed_list = [p.lower() for p in results.get("platforms_failed", [])]
+    skipped_list = [p.lower() for p in results.get("platforms_skipped", [])]
+    for pname in ["INSTAGRAM", "FACEBOOK", "YOUTUBE", "THREADS", "TIKTOK"]:
+        pl = pname.lower()
+        if pl in success_list: status = "SUCCESS"
+        elif pl in failed_list: status = "FAILED"
+        elif pl in skipped_list: status = "SKIPPED"
+        else: status = "-"
+        print(f"{pname}: {status}")
+    print("=" * 60)
+    return results
     platforms = [("facebook", upload_to_facebook, "Facebook"), ("instagram", upload_to_instagram, "Instagram"), ("youtube", upload_to_youtube, "YouTube")]
     for platform_name, upload_func, display_name in platforms:
         print(f"\n{display_name} UPLOAD...")
@@ -98,6 +114,22 @@ def upload_to_all_platforms(video_path, caption, word, reel_data=None):
         else:
             results["platforms_skipped"].append(platform_name)
     print(f"\nSuccessful: {len(results['platforms_successful'])}, Failed: {len(results['platforms_failed'])}, Skipped: {len(results['platforms_skipped'])}")
+    
+    # === STANDARDIZED STATUS REPORT ===
+    print("\n" + "=" * 60)
+    print("UPLOAD STATUS REPORT")
+    print("=" * 60)
+    success_list = [p.lower() for p in results.get("platforms_successful", [])]
+    failed_list = [p.lower() for p in results.get("platforms_failed", [])]
+    skipped_list = [p.lower() for p in results.get("platforms_skipped", [])]
+    for pname in ["INSTAGRAM", "FACEBOOK", "YOUTUBE", "THREADS", "TIKTOK"]:
+        pl = pname.lower()
+        if pl in success_list: status = "SUCCESS"
+        elif pl in failed_list: status = "FAILED"
+        elif pl in skipped_list: status = "SKIPPED"
+        else: status = "-"
+        print(f"{pname}: {status}")
+    print("=" * 60)
     return results
 
 PUBLISHED_LOG = "published_videos.json"
