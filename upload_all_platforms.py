@@ -109,7 +109,7 @@ LANGUAGE_MAP = {
     "mar": "Marathi", "marathi": "Marathi",
     "telu": "Telugu",
     "mal": "Malayalam", "malayalam": "Malayalam",
-    "chi": "Chinese", "chinese": "Chinese", "zh": "Chinese",
+    "chi": "Chinese", "chin": "Chinese", "chinese": "Chinese", "zh": "Chinese",
     "ukr": "Ukrainian", "ukrainian": "Ukrainian",
     "nor": "Norwegian", "norwegian": "Norwegian",
     "gre": "Greek", "greek": "Greek",
@@ -129,7 +129,7 @@ def get_language_name(phrases, lang_field):
         import subprocess
         remote = subprocess.check_output(["git", "config", "--get", "remote.origin.url"], stderr=subprocess.DEVNULL).decode().strip()
         import re
-        m = re.search(r'(?:velocity|vel|Vel|vdl|vei|xn)[_-]?([a-z0-9]+)', remote, re.IGNORECASE)
+        m = re.search(r'(?:velocity|vel|Vel|Ve|vdl|vei|xn)[_-]?([a-z0-9]+)', remote, re.IGNORECASE)
         if m:
             code = m.group(1).lower()
             if code in LANGUAGE_MAP:
