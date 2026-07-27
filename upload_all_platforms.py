@@ -150,6 +150,62 @@ def get_language_name(phrases, lang_field):
     return lang_field.capitalize()
 
 
+FALLBACK_PHRASES = [
+    "Believe in yourself", "You are capable of amazing things", "Dream big, start small",
+    "Never give up on your dreams", "Love yourself first", "Love makes everything possible",
+    "Rise with the dawn", "Courage lives within", "Action beats fear", "Today is yours",
+    "Strength grows in silence", "Heart speaks softly", "Love needs no words",
+    "Warmth fills the soul", "Kind eyes see all", "Gentle hands heal",
+    "Work speaks louder", "Focus wins battles", "Discipline builds empires",
+    "Habits shape destiny", "Excellence is a choice", "Silence teaches patience",
+    "Questions open doors", "Listening brings wisdom", "Stillness reveals truth",
+    "Time heals confusion", "Joy hides in moments", "Smile lights the way",
+    "Laughter heals wounds", "Gratitude multiplies joy", "Peace starts within",
+    "Grow one percent daily", "Small steps matter", "Progress not perfection",
+    "Learn from yesterday", "Better than before", "Appreciate this moment",
+    "Thankful for breath", "Notice what remains", "Grateful for now",
+    "Count present blessings", "Friends walk together", "Shared laughter bonds",
+    "Presence speaks volumes", "Together we stand", "Your hand in mine",
+    "Light follows darkness", "Spring comes after winter", "Tomorrow brings new chances",
+    "Seeds grow underground", "Stars shine brightest at night", "Create without fear",
+    "Ideas flow freely", "Make something today", "Art lives in you", "Express your truth",
+    "Breathe into stillness", "Calm resides within", "Let thoughts pass by",
+    "Find your center", "Peace is available", "Stand tall today",
+    "Trust your instincts", "You know enough", "Speak with conviction", "Own your space",
+    "Continue despite pain", "Endurance builds character", "Keep walking slowly",
+    "Storms pass eventually", "Roots hold in wind", "Beauty surrounds you",
+    "Notice the details", "Wonder is everywhere", "Be moved by life",
+    "Marvel at existence", "Choose light daily", "Focus on good", "Radiate kindness",
+    "Spread warmth around", "Live with intention", "Face what scares",
+    "Bravery is a choice", "Step into discomfort", "Fear means growth", "Do it afraid",
+    "Offer help freely", "Listen with care", "Speak gently always",
+    "Notice who struggles", "Give without expecting", "Wait with purpose",
+    "Trust the timing", "Rushing rarely helps", "Allow the process", "Rest is productive",
+    "Release the grudge", "Free yourself first", "Let anger go", "Healing begins now",
+    "Choose peace over right", "Resilience is learned", "Bend don't break",
+    "Pressure makes diamonds", "Survival is art", "You've survived all days",
+    "Delight in small things", "Savor this bite", "Laugh at nothing", "Play is necessary",
+    "Celebrate being alive", "Rest equals work", "Neither extreme lasts",
+    "Find your middle", "Too much harms", "Moderation preserves",
+    "Discomfort signals change", "Stretch then rest", "New skills feel awkward",
+    "Plateaus are normal", "Growth isn't linear", "Meaning is made",
+    "Serve something larger", "Your gifts matter", "Contribute daily", "Why drives what",
+    "Notice your breath", "Feel your feet", "Hear the silence", "See without labeling",
+    "Be here now", "Simple pleasures bring joy", "Feeling light truly happy",
+    "Sparkling eyes full of life", "A sweet feeling lasts long", "Pure content right now",
+]
+
+
+def detect_phrase_source(phrases):
+    if not phrases:
+        return "unknown"
+    first = phrases[0].get("english", "")
+    for fb in FALLBACK_PHRASES:
+        if first.startswith(fb) or first == fb:
+            return "fallback"
+    return "ai"
+
+
 def generate_caption(phrases, category, lang_field="native", words=None, metadata=None, platform="facebook"):
     if metadata and metadata.get("story"):
         story = metadata["story"]
@@ -203,7 +259,7 @@ def generate_caption(phrases, category, lang_field="native", words=None, metadat
 
 def upload_to_all_platforms(video_path, caption, category, phrases=None, lang_field="native"):
     lang_name = get_language_name(phrases or [], lang_field)
-    results = {"timestamp": datetime.now().isoformat(), "category": category, "video": video_path, "uploads": {}, "platforms_attempted": [], "platforms_successful": [], "platforms_skipped": [], "platforms_failed": [], "timing": {}}
+    results = {"timestamp": datetime.now().isoformat(), "category": category, "video": video_path, "uploads": {}, "platforms_attempted": [], "platforms_successful": [], "platforms_skipped": [], "platforms_failed": [], "timing": {}, "phrase_source": detect_phrase_source(phrases) if phrases else "unknown"}
     print("\n" + "="*80)
     print(f"VELOCITY {lang_name.upper()} - MULTI-PLATFORM UPLOAD")
     print("="*80)
