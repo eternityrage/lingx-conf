@@ -42,10 +42,13 @@ for mod_name, func_name, key in modules:
 def get_latest_reel():
     fv = Path("output/final_video.mp4")
     if fv.exists():
-        meta = {"story": "", "topic": ""}
+        meta = {"story": "", "story_gr": "", "topic": ""}
         se = Path("output/story_en.txt")
         if se.exists():
             with open(se, encoding="utf-8") as f: meta["story"] = f.read()
+        sg = Path("output/story.txt")
+        if sg.exists():
+            with open(sg, encoding="utf-8") as f: meta["story_gr"] = f.read()
         tp = Path("output/topic.txt")
         if tp.exists():
             with open(tp, encoding="utf-8") as f: meta["topic"] = f.read()
@@ -106,6 +109,7 @@ LANGUAGE_MAP = {
     "mar": "Marathi", "marathi": "Marathi",
     "telu": "Telugu",
     "mal": "Malayalam", "malayalam": "Malayalam",
+    "chi": "Chinese", "chinese": "Chinese", "zh": "Chinese",
     "ukr": "Ukrainian", "ukrainian": "Ukrainian",
     "nor": "Norwegian", "norwegian": "Norwegian",
     "gre": "Greek", "greek": "Greek",
@@ -125,7 +129,7 @@ def get_language_name(phrases, lang_field):
         import subprocess
         remote = subprocess.check_output(["git", "config", "--get", "remote.origin.url"], stderr=subprocess.DEVNULL).decode().strip()
         import re
-        m = re.search(r'(?:vel|Vel|vdl|vei|xn)_?([a-z0-9]+)', remote, re.IGNORECASE)
+        m = re.search(r'(?:velocity|vel|Vel|vdl|vei|xn)[_-]?([a-z0-9]+)', remote, re.IGNORECASE)
         if m:
             code = m.group(1).lower()
             if code in LANGUAGE_MAP:
@@ -208,10 +212,19 @@ def detect_phrase_source(phrases):
 
 def generate_caption(phrases, category, lang_field="native", words=None, metadata=None, platform="facebook"):
     if metadata and metadata.get("story"):
-        story = metadata["story"]
+        story_gr = metadata.get("story_gr", "")
+        story_en = metadata.get("story", "")
         topic = metadata.get("topic", "History")
         tag = "ancienthistory"
-        base = [f"Ancient History: {topic}", "", story.strip(), ""]
+        base = [f"Ancient History: {topic}", ""]
+        if story_gr:
+            base.append(story_gr.strip())
+            base.append("")
+            base.append("--- English Translation ---")
+            base.append("")
+        if story_en:
+            base.append(story_en.strip())
+            base.append("")
         base.extend(["Like & follow for daily history!", ""])
         base.extend(["#" + tag, "#history", "#ancienthistory", "#greekhistory", "#womenshistory"])
         return "\n".join(base)
