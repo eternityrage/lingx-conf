@@ -9,9 +9,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-upload_dir = Path(__file__).parent / "upload"
+root = Path(__file__).parent
+upload_dir = root / "upload"
 if upload_dir.exists() and str(upload_dir) not in sys.path:
     sys.path.insert(0, str(upload_dir))
+if str(root) not in sys.path:
+    sys.path.insert(0, str(root))
 
 uploaders = {}
 modules = [
@@ -25,15 +28,28 @@ modules = [
     ("upload_tiktok", "upload_to_tiktok", "tk"),
 ]
 for mod_name, func_name, key in modules:
-    try:
-        mod = __import__(mod_name, fromlist=[func_name])
-        uploaders[key] = getattr(mod, func_name)
-    except Exception as e:
-        print(f"[!] {mod_name} not available: {e}")
-        uploaders[key] = None
+    for prefix in ["upload.", ""]:
+        try:
+            mod = __import__(prefix + mod_name, fromlist=[func_name])
+            uploaders[key] = getattr(mod, func_name)
+            break
+        except ImportError:
+            continue
+    if not uploaders.get(key):
+        print(f"[!] {mod_name} not available")
 
 
 def get_latest_reel():
+    fv = Path("output/final_video.mp4")
+    if fv.exists():
+        meta = {"story": "", "topic": ""}
+        se = Path("output/story_en.txt")
+        if se.exists():
+            with open(se, encoding="utf-8") as f: meta["story"] = f.read()
+        tp = Path("output/topic.txt")
+        if tp.exists():
+            with open(tp, encoding="utf-8") as f: meta["topic"] = f.read()
+        return {"video_path": str(fv), "metadata": meta, "category": meta.get("topic", "Daily Story"), "phrases": [], "words": [], "lang_field": "native"}
     video_dir = Path("output/video")
     if not video_dir.exists(): return None
     reels = list(video_dir.glob("*/final_reel.mp4"))
@@ -90,6 +106,17 @@ LANGUAGE_MAP = {
     "mar": "Marathi", "marathi": "Marathi",
     "telu": "Telugu",
     "mal": "Malayalam", "malayalam": "Malayalam",
+    "ukr": "Ukrainian", "ukrainian": "Ukrainian",
+    "nor": "Norwegian", "norwegian": "Norwegian",
+    "gre": "Greek", "greek": "Greek",
+    "finn": "Finnish", "finnish": "Finnish",
+    "dan": "Danish", "danish": "Danish",
+    "ger": "German", "german": "German",
+    "him": "Hindi", "hindi": "Hindi",
+    "pol": "Polish", "polish": "Polish",
+    "por": "Portuguese", "portuguese": "Portuguese",
+    "ita": "Italian", "italian": "Italian",
+    "Geo": "Georgian", "georgian": "Georgian", "geo": "Georgian",
 }
 
 
@@ -98,7 +125,7 @@ def get_language_name(phrases, lang_field):
         import subprocess
         remote = subprocess.check_output(["git", "config", "--get", "remote.origin.url"], stderr=subprocess.DEVNULL).decode().strip()
         import re
-        m = re.search(r'(?:vel|Vel|vdl|vei)_?([a-z]+)', remote)
+        m = re.search(r'(?:vel|Vel|vdl|vei|xn)_?([a-z0-9]+)', remote, re.IGNORECASE)
         if m:
             code = m.group(1).lower()
             if code in LANGUAGE_MAP:
@@ -123,7 +150,15 @@ def get_language_name(phrases, lang_field):
     return lang_field.capitalize()
 
 
-def generate_caption(phrases, category, lang_field="native", words=None):
+def generate_caption(phrases, category, lang_field="native", words=None, metadata=None, platform="facebook"):
+    if metadata and metadata.get("story"):
+        story = metadata["story"]
+        topic = metadata.get("topic", "History")
+        tag = "ancienthistory"
+        base = [f"Ancient History: {topic}", "", story.strip(), ""]
+        base.extend(["Like & follow for daily history!", ""])
+        base.extend(["#" + tag, "#history", "#ancienthistory", "#greekhistory", "#womenshistory"])
+        return "\n".join(base)
     if words:
         channel = category
         tag = channel.lower().replace(" ", "")
@@ -145,6 +180,16 @@ def generate_caption(phrases, category, lang_field="native", words=None):
         base.extend([f"#{tag}", f"#{tag}daily", "#vocabulary", "#englishlearning", "#wordroots", "#learnenglish"])
         return "\n".join(base)
     lang_name = get_language_name(phrases, lang_field)
+    lang_tag = lang_name.lower().replace(" ", "")
+    if platform == "instagram":
+        base = [f"Learn {lang_name} with VELOCITY {lang_name.upper()}!", "", f"Category: {category}", ""]
+        for i, p in enumerate(phrases[:3], 1):
+            base.append(f"{i}. {p['english']}")
+            base.append(f"   {p.get(lang_field, '')}")
+            base.append("")
+        base.extend(["Which phrase is your favorite? 👇", f"Follow for daily {lang_name} lessons!", ""])
+        base.extend([f"#learn{lang_tag}", f"#{lang_tag}lessons", "#languagelearning", f"#velocity{lang_tag}", f"#daily{lang_tag}"])
+        return "\n".join(base)
     base = [f"Learn {lang_name} with VELOCITY {lang_name.upper()}!", "", f"Category: {category}", "", f"Master {lang_name} one phrase at a time! Today's {category} lesson:", ""]
     for i, p in enumerate(phrases[:5], 1):
         base.append(f"{i}. {p['english']}")
@@ -152,7 +197,6 @@ def generate_caption(phrases, category, lang_field="native", words=None):
         base.append(f"   [{p.get('transliteration', '')}]")
         base.append("")
     base.extend(["Tip: Repeat each phrase out loud 3 times!", "Like this video if you learned something new!", "Comment your favorite phrase below!", "Follow for daily lessons!", ""])
-    lang_tag = lang_name.lower().replace(" ", "")
     base.extend([f"#learn{lang_tag}", f"#{lang_tag}lessons", f"#{lang_tag}forbeginners", "#languagelearning", f"#{lang_tag}vocabulary", f"#velocity{lang_tag}", f"#daily{lang_tag}", f"#{lang_tag}", "#learnlanguages"])
     return "\n".join(base)
 
@@ -176,7 +220,7 @@ def upload_to_all_platforms(video_path, caption, category, phrases=None, lang_fi
                     yt_title, yt_desc, yt_tags = generate_video_metadata(category, len(phrases) if phrases else 5, phrases)
                     r = func(video_path=video_path, title=yt_title, description=yt_desc, tags=yt_tags, category_id='22')
                 elif pname == "vk":
-                    r = func(video_path=video_path, description=caption, title=f"{lang_name}: {category}")
+                    r = func(video_path=video_path, description=caption)
                 elif pname == "telegram":
                     r = func(video_path=video_path, caption=caption)
                 elif pname == "twitter":
@@ -184,11 +228,12 @@ def upload_to_all_platforms(video_path, caption, category, phrases=None, lang_fi
                 elif pname == "threads":
                     r = func(video_path=video_path, text=caption)
                 elif pname == "tiktok":
-                    r = func(video_path=video_path, description=caption)
+                    r = func(video_path=video_path, description=caption, title=caption[:100])
                 elif pname == "facebook":
-                    r = func(video_path=video_path, description=caption, title=f"{lang_name}: {category}")
+                    r = func(video_path=video_path, description=caption)
                 elif pname == "instagram":
-                    r = func(video_path=video_path, caption=caption, is_story=False)
+                    ig_cap = generate_caption(phrases, category, lang_field, words, metadata, platform="instagram")
+                    r = func(video_path=video_path, caption=ig_cap, is_story=False)
                 t_end = datetime.now()
                 t_sec = round((t_end - t_start).total_seconds())
                 results["timing"][pname] = f"{t_sec}s"
@@ -216,7 +261,7 @@ def main():
     print("="*80)
     reel = get_latest_reel()
     if not reel: print("No reel found"); sys.exit(1)
-    caption = generate_caption(reel['phrases'], reel['category'], reel['lang_field'], reel.get('words'))
+    caption = generate_caption(reel['phrases'], reel['category'], reel['lang_field'], reel.get('words'), reel.get('metadata'))
     upload_to_all_platforms(reel['video_path'], caption, reel['category'], reel['phrases'], reel['lang_field'])
 
 if __name__ == "__main__": main()
