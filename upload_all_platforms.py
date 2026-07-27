@@ -110,6 +110,11 @@ LANGUAGE_MAP = {
     "telu": "Telugu",
     "mal": "Malayalam", "malayalam": "Malayalam",
     "chi": "Chinese", "chin": "Chinese", "chinese": "Chinese", "zh": "Chinese",
+    "rus": "Russian", "russian": "Russian",
+    "fre": "French", "french": "French",
+    "swe": "Swedish", "swedish": "Swedish",
+    "kor": "Korean", "korean": "Korean",
+    "spa": "Spanish", "spanish": "Spanish",
     "ukr": "Ukrainian", "ukrainian": "Ukrainian",
     "nor": "Norwegian", "norwegian": "Norwegian",
     "gre": "Greek", "greek": "Greek",
@@ -129,19 +134,26 @@ def get_language_name(phrases, lang_field):
         import subprocess
         remote = subprocess.check_output(["git", "config", "--get", "remote.origin.url"], stderr=subprocess.DEVNULL).decode().strip()
         import re
-        m = re.search(r'(?:velocity|vel|Vel|Ve|vdl|vei|xn)[_-]?([a-z0-9]+)', remote, re.IGNORECASE)
+        # First try: extract repo name from URL (last segment)
+        m_repo = re.search(r'/([^/]+?)(?:\.git)?$', remote)
+        if m_repo:
+            repo = m_repo.group(1).lower()
+            parts = re.split(r'[-_\s]', repo)
+            if len(parts) >= 2:
+                code = parts[-1]
+                if code in LANGUAGE_MAP:
+                    return LANGUAGE_MAP[code]
+                code = parts[0]
+                if code in LANGUAGE_MAP:
+                    return LANGUAGE_MAP[code]
+            if repo in LANGUAGE_MAP:
+                return LANGUAGE_MAP[repo]
+        # Second try: match known prefixes in the full URL
+        m = re.search(r'(?:^|/|\b)(?:velocity|vel|Vel|Ve|vdl|vei|xn)[_-]?([a-z]{2,8})(?:_|-|\.|$|/)', remote, re.IGNORECASE)
         if m:
             code = m.group(1).lower()
             if code in LANGUAGE_MAP:
                 return LANGUAGE_MAP[code]
-        m2 = re.search(r'/([^/]+)$', remote)
-        if m2:
-            repo = m2.group(1).replace(".git", "").lower()
-            parts = re.split(r'[-_\s]', repo)
-            if len(parts) > 1:
-                code = parts[-1]
-                if code in LANGUAGE_MAP:
-                    return LANGUAGE_MAP[code]
     except Exception:
         pass
     if lang_field in LANGUAGE_MAP:
