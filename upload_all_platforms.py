@@ -257,7 +257,7 @@ def generate_caption(phrases, category, lang_field="native", words=None, metadat
     return "\n".join(base)
 
 
-def upload_to_all_platforms(video_path, caption, category, phrases=None, lang_field="native"):
+def upload_to_all_platforms(video_path, caption, category, phrases=None, lang_field="native", words=None, metadata=None):
     lang_name = get_language_name(phrases or [], lang_field)
     results = {"timestamp": datetime.now().isoformat(), "category": category, "video": video_path, "uploads": {}, "platforms_attempted": [], "platforms_successful": [], "platforms_skipped": [], "platforms_failed": [], "timing": {}, "phrase_source": detect_phrase_source(phrases) if phrases else "unknown"}
     print("\n" + "="*80)
@@ -288,7 +288,7 @@ def upload_to_all_platforms(video_path, caption, category, phrases=None, lang_fi
                 elif pname == "facebook":
                     r = func(video_path=video_path, description=caption)
                 elif pname == "instagram":
-                    ig_cap = generate_caption(phrases, category, lang_field, words, metadata, platform="instagram")
+                    ig_cap = generate_caption(phrases, category, lang_field, words if words else None, metadata if metadata else None, platform="instagram")
                     r = func(video_path=video_path, caption=ig_cap, is_story=False)
                 t_end = datetime.now()
                 t_sec = round((t_end - t_start).total_seconds())
@@ -318,6 +318,6 @@ def main():
     reel = get_latest_reel()
     if not reel: print("No reel found"); sys.exit(1)
     caption = generate_caption(reel['phrases'], reel['category'], reel['lang_field'], reel.get('words'), reel.get('metadata'))
-    upload_to_all_platforms(reel['video_path'], caption, reel['category'], reel['phrases'], reel['lang_field'])
+    upload_to_all_platforms(reel['video_path'], caption, reel['category'], reel['phrases'], reel['lang_field'], reel.get('words'), reel.get('metadata'))
 
 if __name__ == "__main__": main()
