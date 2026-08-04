@@ -46,16 +46,33 @@ def upload_to_instagram(video_path, caption="", is_story=False):
         print(f"[instagram] ❌ Video file not found: {video_path}")
         return {'status': 'failed', 'error': 'Video file not found', 'platform': 'instagram'}
 
+    # Always faststart-mux the file so the moov atom is at the front:
+    # Meta's resumable processing intermittently rejects files without it.
+    faststart_path = str(video_path_obj.parent / f"ig_fast_{video_path_obj.name}")
+    try:
+        cmd = [
+            "ffmpeg", "-y", "-i", str(video_path_obj),
+            "-c", "copy",
+            "-movflags", "+faststart",
+            faststart_path
+        ]
+        subprocess.run(cmd, capture_output=True, check=True)
+        if os.path.exists(faststart_path) and os.path.getsize(faststart_path) > 0:
+            upload_file_path = faststart_path
+        else:
+            upload_file_path = str(video_path_obj)
+    except Exception:
+        upload_file_path = str(video_path_obj)
+
+    file_size = os.path.getsize(upload_file_path)
+
     # Auto-compress video if payload > 12 MB to ensure 100% Meta direct upload success
-    upload_file_path = str(video_path_obj)
-    file_size = video_path_obj.stat().st_size
-    
     if file_size > 12 * 1024 * 1024:
         print(f"[instagram] ℹ️ File size ({file_size/(1024*1024):.2f} MB) > 12MB. Optimizing with FFmpeg...")
         compressed_path = str(video_path_obj.parent / f"ig_opt_{video_path_obj.name}")
         try:
             cmd = [
-                "ffmpeg", "-y", "-i", str(video_path_obj),
+                "ffmpeg", "-y", "-i", upload_file_path,
                 "-fs", "11M",
                 "-c:v", "libx264", "-pix_fmt", "yuv420p",
                 "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
@@ -72,78 +89,87 @@ def upload_to_instagram(video_path, caption="", is_story=False):
 
     api_base = "https://graph.facebook.com/v21.0"
 
-    try:
-        print(f"[instagram] Step 1: Creating resumable {media_type} container...")
-        c_params = {
-            'media_type': 'STORIES' if is_story else 'REELS',
-            'upload_type': 'resumable',
-            'caption': caption[:2200] if caption else '',
-            'access_token': access_token
-        }
-        if not is_story:
-            c_params['share_to_feed'] = False
+    max_attempts = 3
+    for attempt in range(1, max_attempts + 1):
+        try:
+            print(f"[instagram] Step 1: Creating resumable {media_type} container (attempt {attempt}/{max_attempts})...")
+            c_params = {
+                'media_type': 'STORIES' if is_story else 'REELS',
+                'upload_type': 'resumable',
+                'caption': caption[:2200] if caption else '',
+                'access_token': access_token
+            }
+            if not is_story:
+                c_params['share_to_feed'] = False
 
-        c_res = requests.post(f"{api_base}/{user_id}/media", params=c_params, timeout=30)
-        if c_res.status_code not in (200, 201):
-            err = c_res.json().get('error', {}).get('message', c_res.text)
-            raise Exception(f"Container creation failed: {err}")
+            c_res = requests.post(f"{api_base}/{user_id}/media", params=c_params, timeout=30)
+            if c_res.status_code not in (200, 201):
+                err = c_res.json().get('error', {}).get('message', c_res.text)
+                raise Exception(f"Container creation failed: {err}")
 
-        c_data = c_res.json()
-        container_id = c_data.get('id')
-        upload_uri = c_data.get('uri')
-        print(f"[instagram] ✅ Container ID: {container_id}")
+            c_data = c_res.json()
+            container_id = c_data.get('id')
+            upload_uri = c_data.get('uri')
+            print(f"[instagram] ✅ Container ID: {container_id}")
 
-        print("[instagram] Step 2: Transferring video bytes to Meta Servers...")
-        with open(upload_file_path, 'rb') as f:
-            video_bytes = f.read()
+            print("[instagram] Step 2: Transferring video bytes to Meta Servers...")
+            with open(upload_file_path, 'rb') as f:
+                video_bytes = f.read()
 
-        up_headers = {
-            'Authorization': f'OAuth {access_token}',
-            'offset': '0',
-            'file_size': str(file_size),
-            'Content-Type': 'video/mp4'
-        }
+            up_headers = {
+                'Authorization': f'OAuth {access_token}',
+                'offset': '0',
+                'file_size': str(file_size),
+                'Content-Type': 'video/mp4'
+            }
 
-        up_res = requests.post(upload_uri, headers=up_headers, data=video_bytes, timeout=120)
-        if up_res.status_code not in (200, 201):
-            err = up_res.json().get('error', {}).get('message', up_res.text) if up_res.text else 'Transfer error'
-            raise Exception(f"Video binary transfer failed: {err}")
+            up_res = requests.post(upload_uri, headers=up_headers, data=video_bytes, timeout=120)
+            if up_res.status_code not in (200, 201):
+                err = up_res.json().get('error', {}).get('message', up_res.text) if up_res.text else 'Transfer error'
+                raise Exception(f"Video binary transfer failed: {err}")
 
-        print(f"[instagram] ✅ Video Bytes Transferred Successfully!")
+            print(f"[instagram] ✅ Video Bytes Transferred Successfully!")
 
-        print("[instagram] Step 3: Waiting for Meta to process container...")
-        max_wait = 180
-        waited = 0
-        while waited < max_wait:
-            time.sleep(45 if waited == 0 else 30)
-            waited += 45 if waited == 0 else 30
-            print(f"[instagram] Publishing media (waited {waited}s)...")
-            pub_res = requests.post(
-                f"{api_base}/{user_id}/media_publish",
-                params={'creation_id': container_id, 'access_token': access_token},
-                timeout=60
-            )
+            print("[instagram] Step 3: Waiting for Meta to process container...")
+            max_wait = 180
+            waited = 0
+            while waited < max_wait:
+                time.sleep(45 if waited == 0 else 30)
+                waited += 45 if waited == 0 else 30
+                print(f"[instagram] Publishing media (waited {waited}s)...")
+                pub_res = requests.post(
+                    f"{api_base}/{user_id}/media_publish",
+                    params={'creation_id': container_id, 'access_token': access_token},
+                    timeout=60
+                )
+                if pub_res.status_code in (200, 201):
+                    break
+                err_msg = ""
+                try: err_msg = pub_res.json().get('error', {}).get('message', '')
+                except: pass
+                if waited >= max_wait:
+                    raise Exception(f"Publish failed after {max_wait}s: {err_msg or pub_res.text}")
+                print(f"[instagram] Not ready yet, retrying in 30s...")
+
             if pub_res.status_code in (200, 201):
-                break
-            err_msg = ""
-            try: err_msg = pub_res.json().get('error', {}).get('message', '')
-            except: pass
-            if waited >= max_wait:
-                raise Exception(f"Publish failed after {max_wait}s: {err_msg or pub_res.text}")
-            print(f"[instagram] Not ready yet, retrying in 30s...")
+                media_id = pub_res.json().get('id', container_id)
+                print(f"[instagram] ? SUCCESS! Media ID: {media_id} (waited {waited}s)")
+                print(f"INSTAGRAM: SUCCESS (ID: {media_id})")
+                return {'status': 'success', 'id': media_id, 'platform': 'instagram', 'wait_s': waited}
+            else:
+                err = pub_res.json().get('error', {}).get('message', pub_res.text)
+                raise Exception(f"Publish failed: {err}")
 
-        if pub_res.status_code in (200, 201):
-            media_id = pub_res.json().get('id', container_id)
-            print(f"[instagram] ? SUCCESS! Media ID: {media_id} (waited {waited}s)")
-            print(f"INSTAGRAM: SUCCESS (ID: {media_id})")
-            return {'status': 'success', 'id': media_id, 'platform': 'instagram', 'wait_s': waited}
-        else:
-            err = pub_res.json().get('error', {}).get('message', pub_res.text)
-            raise Exception(f"Publish failed: {err}")
+        except Exception as e:
+            err_text = str(e)
+            if attempt < max_attempts and ('ProcessingFailedError' in err_text or 'request processing failed' in err_text.lower() or 'transfer failed' in err_text):
+                print(f"[instagram] ⚠️ Attempt {attempt}/{max_attempts} failed ({err_text}). Retrying with a fresh container...")
+                time.sleep(5 * attempt)
+                continue
+            print(f"[instagram] ❌ Error: {err_text}")
+            return {'status': 'failed', 'error': err_text, 'platform': 'instagram'}
 
-    except Exception as e:
-        print(f"[instagram] ❌ Error: {e}")
-        return {'status': 'failed', 'error': str(e), 'platform': 'instagram'}
+    return {'status': 'failed', 'error': 'All Instagram upload attempts failed', 'platform': 'instagram'}
 
 
 
