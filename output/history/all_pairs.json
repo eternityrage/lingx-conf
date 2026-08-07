@@ -210,7 +210,9 @@
     "he vs. him (subject vs. object)",
     "we vs. us (subject vs. object)",
     "enter vs. exit",
-    "ascend vs. descend"
+    "ascend vs. descend",
+    "demand that he go vs. demand that he goes",
+    "it is important that she be vs. it is important that she is"
   ],
-  "last_updated": "2026-08-06T23:47:49.997366"
+  "last_updated": "2026-08-07T04:21:04.025182"
 }
