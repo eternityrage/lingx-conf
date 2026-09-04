@@ -484,7 +484,9 @@
     "comma before which (non-restrictive)",
     "no comma with that (restrictive)",
     "ambiguous vs ambiguous",
-    "gender vs sex"
+    "gender vs sex",
+    "trunk vs boot",
+    "chips vs crisps"
   ],
-  "last_updated": "2026-09-04T06:48:24.912130"
+  "last_updated": "2026-09-04T10:52:36.390089"
 }
