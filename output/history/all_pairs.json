@@ -514,7 +514,9 @@
     "chair vs chairman",
     "faint vs feign",
     "don't know vs know not",
-    "inverted question order (auxiliary verb) vs. statement order"
+    "inverted question order (auxiliary verb) vs. statement order",
+    "active voice vs. passive voice (unnecessary use)",
+    "agentless passive vs. active voice (hiding responsibility)"
   ],
-  "last_updated": "2026-09-07T06:50:36.281458"
+  "last_updated": "2026-09-07T11:55:11.363961"
 }
