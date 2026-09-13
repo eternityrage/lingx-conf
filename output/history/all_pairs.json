@@ -570,7 +570,9 @@
     "overuse of passive voice vs. underuse of active voice",
     "vague agents (passive) vs. specific agents (active)",
     "take off vs take out",
-    "badly vs bad"
+    "badly vs bad",
+    "to vs at (destination/state)",
+    "for vs during (time)"
   ],
-  "last_updated": "2026-09-13T07:01:07.433028"
+  "last_updated": "2026-09-13T11:19:41.110475"
 }
