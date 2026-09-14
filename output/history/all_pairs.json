@@ -580,7 +580,9 @@
     "emigrated with vs emigrated to",
     "immigrated from vs immigrated to",
     "subject pronoun after 'than'",
-    "object pronoun after 'than'"
+    "object pronoun after 'than'",
+    "inversion in questions (do/did)",
+    "negation with 'not'"
   ],
-  "last_updated": "2026-09-14T07:24:01.994210"
+  "last_updated": "2026-09-14T12:10:38.586268"
 }
