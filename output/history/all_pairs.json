@@ -582,7 +582,9 @@
     "subject pronoun after 'than'",
     "object pronoun after 'than'",
     "inversion in questions (do/did)",
-    "negation with 'not'"
+    "negation with 'not'",
+    "presence vs. presents",
+    "gooder vs better"
   ],
-  "last_updated": "2026-09-14T12:10:38.586268"
+  "last_updated": "2026-09-14T16:04:11.149870"
 }
