@@ -630,7 +630,9 @@
     "subject pronoun after 'between'",
     "object pronoun in compound subjects (casual)",
     "debris vs. debris",
-    "quay vs. quay"
+    "quay vs. quay",
+    "someone vs. somebody (formal context)",
+    "everyone vs. everybody (formal context)"
   ],
-  "last_updated": "2026-09-19T06:53:27.162284"
+  "last_updated": "2026-09-19T10:31:39.587129"
 }
