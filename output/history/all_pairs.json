@@ -650,7 +650,9 @@
     "deceased vs diseased",
     "forgetful vs forfeit",
     "saw vs was seeing",
-    "visited vs was visiting"
+    "visited vs was visiting",
+    "on vs at (for times)",
+    "by vs with (for means)"
   ],
-  "last_updated": "2026-09-21T07:27:38.185253"
+  "last_updated": "2026-09-21T12:19:12.026210"
 }
