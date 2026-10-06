@@ -54,6 +54,21 @@ def upload_to_instagram(video_path, caption="", is_story=False):
     raw_size = video_path_obj.stat().st_size
     upload_file_path = str(video_path_obj)
     
+    # Check video duration using ffprobe to enforce Meta Reels 90s hard limit
+    duration = None
+    try:
+        probe_cmd = [
+            "ffprobe", "-v", "error", "-show_entries",
+            "format=duration", "-of", "default=noprint_wrappers=1:nokey=1",
+            str(video_path_obj)
+        ]
+        probe_res = subprocess.run(probe_cmd, capture_output=True, text=True)
+        if probe_res.returncode == 0 and probe_res.stdout.strip():
+            duration = float(probe_res.stdout.strip())
+            print(f"[instagram] Video duration: {duration:.1f}s")
+    except Exception:
+        pass
+
     try:
         cmd = [
             "ffmpeg", "-y", "-i", str(video_path_obj),
@@ -61,6 +76,9 @@ def upload_to_instagram(video_path, caption="", is_story=False):
             "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
             "-movflags", "+faststart"
         ]
+        if duration and duration > 89.5:
+            print(f"[instagram] ⚠️ Duration {duration:.1f}s > 89.5s (Meta Reels hard cap). Clamping to 89.5s...")
+            cmd.extend(["-t", "89.5"])
         if raw_size > 12 * 1024 * 1024:
             cmd.extend(["-fs", "11M"])
         cmd.append(opt_path)
