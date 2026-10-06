@@ -230,10 +230,26 @@ Return ONLY the JSON array."""
                 return collected[:num]
         except Exception as e:
             print(f"[api] Attempt {attempt + 1} FAILED: {e}")
+    if len(collected) < num:
+        print("[fallback] Checking curated fallback pairs bank for unused pairs...")
+        fallback_pairs = [
+            {"pair": "affect vs effect", "word1": {"word": "affect", "part_of_speech": "verb", "definition": "to have an influence on", "example": "The weather will affect our travel plans.", "memory_hook": "Affect is an Action (verb)."}, "word2": {"word": "effect", "part_of_speech": "noun", "definition": "the result or consequence", "example": "The law had an immediate effect.", "memory_hook": "Effect is the End result (noun)."}},
+            {"pair": "principal vs principle", "word1": {"word": "principal", "part_of_speech": "noun", "definition": "the head of a school or chief matter", "example": "The school principal gave a speech.", "memory_hook": "The principal is your PAL."}, "word2": {"word": "principle", "part_of_speech": "noun", "definition": "a fundamental truth or moral rule", "example": "It is against his principles to lie.", "memory_hook": "A principle is a RULE."}},
+            {"pair": "compliment vs complement", "word1": {"word": "compliment", "part_of_speech": "noun", "definition": "an expression of praise or admiration", "example": "She received a lovely compliment.", "memory_hook": "I like to give compliments (I for compliment)."}, "word2": {"word": "complement", "part_of_speech": "verb", "definition": "to complete or enhance nicely", "example": "The wine complements the cheese.", "memory_hook": "Complement Completes something (with an E)."}},
+            {"pair": "eminent vs imminent", "word1": {"word": "eminent", "part_of_speech": "adjective", "definition": "famous and respected within a sphere", "example": "An eminent scientist delivered the keynote.", "memory_hook": "Eminent = Esteemed person."}, "word2": {"word": "imminent", "part_of_speech": "adjective", "definition": "about to happen very soon", "example": "A storm is imminent.", "memory_hook": "Imminent = In a Minute."}},
+        ]
+        h = load_history()
+        history_pairs = h.get("pairs", [])
+        for fb in fallback_pairs:
+            if not is_semantically_used(fb["pair"], history_pairs) and not is_semantically_used(fb["pair"], [m["pair"] for m in collected]):
+                collected.append(fb)
+                print(f"  [fallback] Added unused curated pair: '{fb['pair']}'")
+                if len(collected) >= num:
+                    break
     if collected:
         add_to_history([m["pair"] for m in collected])
         return collected
-    raise RuntimeError("API failed")
+    raise RuntimeError("API failed and no unused fallbacks available")
 
 def create_bg():
     from PIL import Image, ImageDraw
