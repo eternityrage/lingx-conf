@@ -413,7 +413,7 @@ def create_video(image_files, audio_files, out_file):
     cf=Path(out_file).parent/"cl.txt"
     with open(cf,"w") as f:
         for c in clips: f.write(f"file '{str(c.resolve()).replace(chr(92),chr(47))}'\n")
-    subprocess.run(["ffmpeg","-y","-f","concat","-safe","0","-i",str(cf),"-c","copy",str(out_file)],capture_output=True)
+    subprocess.run(["ffmpeg","-y","-f","concat","-safe","0","-i",str(cf),"-c","copy","-movflags","+faststart",str(out_file)],capture_output=True)
     for c in clips:
         if c.exists(): c.unlink()
     if cf.exists(): cf.unlink()
