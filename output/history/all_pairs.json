@@ -952,7 +952,9 @@
     "information vs. the information",
     "advice vs. the advice",
     "whoever vs. whomever (formal subject vs. object)",
-    "myself vs. i/me (reflexive/intensive vs. subject/object)"
+    "myself vs. i/me (reflexive/intensive vs. subject/object)",
+    "hypothesis vs. assumption",
+    "variable vs. constant"
   ],
-  "last_updated": "2026-10-21T07:50:57.913425"
+  "last_updated": "2026-10-21T12:10:08.332103"
 }
