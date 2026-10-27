@@ -1018,7 +1018,9 @@
     "avoid passive where active is clearer vs. use passive when emphasis is needed",
     "unnecessary passive vs. necessary passive",
     "good vs better",
-    "many vs more"
+    "many vs more",
+    "ourselves vs. ourself",
+    "themselves vs. themself"
   ],
-  "last_updated": "2026-10-27T19:31:19.554687"
+  "last_updated": "2026-10-27T22:27:13.064346"
 }
