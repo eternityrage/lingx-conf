@@ -1106,7 +1106,9 @@
     "really vs unique (gradable vs non-gradable)",
     "so vs freezing (non-gradable threshold)",
     "must not vs don’t have to",
-    "must vs might"
+    "must vs might",
+    "either vs or",
+    "neither vs nor"
   ],
-  "last_updated": "2026-11-05T22:36:54.943604"
+  "last_updated": "2026-11-05T23:45:02.552567"
 }
