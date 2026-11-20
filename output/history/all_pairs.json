@@ -1244,7 +1244,9 @@
     "hereby vs by",
     "whereto vs where to",
     "will vs can",
-    "may vs will (future prediction)"
+    "may vs will (future prediction)",
+    "myself vs each other",
+    "reflexive pronoun mismatch with subject (herself vs herself/themselves)"
   ],
-  "last_updated": "2026-11-19T23:16:14.475297"
+  "last_updated": "2026-11-20T00:44:41.665963"
 }
