@@ -1246,7 +1246,9 @@
     "will vs can",
     "may vs will (future prediction)",
     "myself vs each other",
-    "reflexive pronoun mismatch with subject (herself vs herself/themselves)"
+    "reflexive pronoun mismatch with subject (herself vs herself/themselves)",
+    "continue to do vs continue doing",
+    "like to do vs like doing"
   ],
-  "last_updated": "2026-11-20T00:44:41.665963"
+  "last_updated": "2026-11-20T10:13:55.364125"
 }
