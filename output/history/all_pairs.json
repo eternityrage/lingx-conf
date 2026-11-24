@@ -1290,7 +1290,9 @@
     "hyphenated modifier vs unhyphenated (\"well known\" vs \"well-known\")",
     "en dash vs hyphen in ranges (\"2019-2020\" vs \"2019–2020\")",
     "gendered job titles vs gender-neutral titles",
-    "singular they vs he/she (inconsistent reference)"
+    "singular they vs he/she (inconsistent reference)",
+    "the early bird catches the worm vs early bird gets the worm",
+    "birds of a feather flock together vs birds of a feather flock alone"
   ],
-  "last_updated": "2026-11-24T18:02:51.105699"
+  "last_updated": "2026-11-24T20:44:01.459879"
 }
