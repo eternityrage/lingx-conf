@@ -1288,7 +1288,9 @@
     "i’ve lived here for years vs i lived here for years",
     "sincerely vs faithfully",
     "hyphenated modifier vs unhyphenated (\"well known\" vs \"well-known\")",
-    "en dash vs hyphen in ranges (\"2019-2020\" vs \"2019–2020\")"
+    "en dash vs hyphen in ranges (\"2019-2020\" vs \"2019–2020\")",
+    "gendered job titles vs gender-neutral titles",
+    "singular they vs he/she (inconsistent reference)"
   ],
-  "last_updated": "2026-11-24T12:42:09.302368"
+  "last_updated": "2026-11-24T18:02:51.105699"
 }
